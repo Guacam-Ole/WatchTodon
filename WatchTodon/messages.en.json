@@ -1,0 +1,12 @@
+{
+  "InfoYourStats":"Here are your statistics. \nGeneral Statistics:\n[TOTAL] total Watchdogs currently stored of which [BROKEN] did not respond in time\n\nYour individual Watchdogs follow:\n",
+  "ErrAccountNotFound":"Sorry. Cannot find Account '[ACCOUNTNAME]'. ",
+  "InfoAccountAdded":"Looks good. '[ACCOUNTNAME]' added with [HOURS] interval between checks. You now have [COUNT] active watchdogs",
+  "ErrNotRemoved":"Sorry. Cannot remove '[ACCOUNTNAME]' because you don't seem to have a Watchdog on that account",
+  "InfoAccountRemoved": "Done. Account '[ACCOUNTNAME]' removed",
+  "InfoWatchdogSingleLine":"   '[ACCOUNTNAME]' ([HOURS] hours)\n",
+  "ErrSorry":"Sorry. Did not get that. Maybe this image does help",
+  "WatchDogFirstTime": "Hey there. Just wanted to inform you that I checked '[ACCOUNTNAME]' for the very first time. The last post was from '[DATE]'. (I won't bother you again if everything keeps being fine)",
+  "WatchDogBadNews": "Bad news! '[ACCOUNTNAME]' stopped sending since '[DATE]'.",
+  "WatchDogGoodNews": "Good news! '[ACCOUNTNAME]' just went back again on '[DATE]'."
+}

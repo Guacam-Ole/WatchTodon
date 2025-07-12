@@ -1,0 +1,12 @@
+{
+  "InfoYourStats":"Hier sind Deine Statistiken. \nAllgemeine Statistiken:\n[TOTAL] Watchdogs insgesamt von denen [BROKEN] nicht rechtzeitig reagiert haben\n\nDeine Watchdogs:\n",
+  "ErrAccountNotFound":"⚠\uFE0F Sorry. Kann '[ACCOUNTNAME]' nicht finden. ",
+  "InfoAccountAdded":"Sieht gut aus.\uD83E\uDD73. '[ACCOUNTNAME]' mit [HOURS] Stunden zwischen den Checks hinzugefügt. Du hast nun [COUNT] Überwachungen aktiv",
+  "ErrNotRemoved":"⚠\uFE0F Sorry. Kann '[ACCOUNTNAME]' nicht entfernen weil Du dazu gar keinen Watchdog gespeichert hast",
+  "InfoAccountRemoved": "Erledigt. Account '[ACCOUNTNAME]' wurde entfernt",
+  "InfoWatchdogSingleLine":"   '[ACCOUNTNAME]' ([HOURS] Stunden)\n",
+  "ErrSorry":"⚠\uFE0F Sorry. Versteh ich nicht. Vielleicht hilft das?",
+  "WatchDogFirstTime": "Moin! Wollte nur eben Bescheid geben, dass ich '[ACCOUNTNAME]' zum ersten Mal gecheckt habe. Der letzte Eintrag ist vom '[DATE]'. (Ich werde Dich nicht weiter nerven solange alles in Ordnung bleibt)",
+  "WatchDogBadNews": "Hoppla ☹\uFE0F '[ACCOUNTNAME]' Hat seit '[DATE]' nichts mehr geschrieben.",
+  "WatchDogGoodNews": "Hurra \uD83C\uDF89 '[ACCOUNTNAME]' ist wieder da seit '[DATE]'."
+}
