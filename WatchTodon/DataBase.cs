@@ -5,7 +5,7 @@ namespace WatchTodon;
 public class DataBase
 {
     private readonly LiteDatabase _database = new(Path);
-    private const string Path = "./db/order.db";
+    private const string Path = "/db/order.db";
 
     public WatchDogEntry? GetEntryFor(string requestedBy, string accountToWatch)
     {
