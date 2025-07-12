@@ -1,8 +1,1 @@
-bin/
-obj/
-/packages/
-riderModule.iml
-/_ReSharper.Caches/
-secrets.json
-/.idea/
 *.user
