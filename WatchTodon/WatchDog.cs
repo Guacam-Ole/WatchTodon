@@ -33,10 +33,10 @@ public class WatchDog
     {
         Console.WriteLine("New Database Contents:\n");
         var all=_dataBase.GetAllEntries();
-        Console.WriteLine("   DidFail? \tLastChecked \t\tLastPost \t\tname\n");
+        Console.WriteLine("   DidFail? \t Interval \tLastChecked \t\tLastPost \t\tCreated \t\tname \n");
         foreach (var entry in all)
         {
-            Console.WriteLine($"   {entry.DidFail} \t{entry.LastChecked} \t{entry.LastStatus} \t '{entry.AccountToWatchName}'\n");
+            Console.WriteLine($"   {entry.DidFail} \t{entry.Interval} \t{entry.LastChecked} \t{entry.LastStatus} \t{entry.Created}\t'{entry.AccountToWatchName}'\n");
         }
     }
 
