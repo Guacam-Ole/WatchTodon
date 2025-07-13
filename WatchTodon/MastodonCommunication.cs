@@ -125,6 +125,7 @@ public class MastodonCommunication
         var newCount = _dataBase.GetAllEntriesFor(notification.Status.Account.Id).Count;
         await ReplyWithMessage(notification.Status,
             Language.Convert(_language.GetCaptions().InfoAccountAdded, account, hours, newCount));
+        Console.WriteLine($"added or updated Account {account} with {hours}. (now {newCount} for {notification.Status.Account.AccountName}");
     }
 
     private async Task<string?> GetAccountIdByName(string account)
@@ -169,6 +170,7 @@ public class MastodonCommunication
             await ReplyWithMessage(notification.Status,
                 Language.Convert(_language.GetCaptions().InfoAccountRemoved, account));
         }
+        Console.WriteLine($"removed Account {account} for {notification.Status.Account.AccountName}");
     }
 
     private async Task ParseInfo(Notification notification)
