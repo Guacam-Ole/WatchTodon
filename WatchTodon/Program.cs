@@ -27,9 +27,8 @@ class Program
                     {
                         Thread.Sleep(TimeSpan.FromMinutes(1));
                         if (lastCheck > DateTime.Now.AddMinutes(-15)) continue;
-                        counter++;
                     }
-                    
+                    counter++;
                     
                     lastCheck = DateTime.Now;
                     var watchDog = scope.ServiceProvider.GetRequiredService<WatchDog>();
