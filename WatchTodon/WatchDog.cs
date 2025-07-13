@@ -29,14 +29,20 @@ public class WatchDog
                throw new Exception("Failed to connect to Mastodon");
     }
 
+    private string D2S(DateTime? dateTime)
+    {
+        if (dateTime == null) return "never";
+        return dateTime.Value.ToString();
+    }
+    
     public void OutPutData()
     {
         Console.WriteLine("New Database Contents:\n");
         var all=_dataBase.GetAllEntries();
-        Console.WriteLine("   DidFail? \t Interval \tLastChecked \t\tLastPost \t\tCreated \t\tname \n");
+        Console.WriteLine("   DidFail? \tInterval \tLastChecked \t\tLastPost \t\tCreated \t\tname \n");
         foreach (var entry in all)
         {
-            Console.WriteLine($"   {entry.DidFail} \t{entry.Interval} \t{entry.LastChecked} \t{entry.LastStatus} \t{entry.Created}\t'{entry.AccountToWatchName}'\n");
+            Console.WriteLine($"   {entry.DidFail} \t{entry.Interval.TotalHours} \t{D2S(entry.LastChecked)} \t{D2S(entry.LastStatus)} \t{entry.Created}\t'{entry.AccountToWatchName}'\n");
         }
     }
 
