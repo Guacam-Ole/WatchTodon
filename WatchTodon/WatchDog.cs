@@ -29,7 +29,7 @@ public class WatchDog
                throw new Exception("Failed to connect to Mastodon");
     }
 
-    private void OutPutData()
+    public void OutPutData()
     {
         Console.WriteLine("New Database Contents:\n");
         var all=_dataBase.GetAllEntries();

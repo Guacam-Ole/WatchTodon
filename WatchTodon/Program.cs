@@ -13,6 +13,7 @@ class Program
 
         Console.WriteLine("WatchTodon up and running");
         var lastCheck = DateTime.Now;
+        var startUp = true;
 
         while (true)
         {
@@ -23,8 +24,16 @@ class Program
                 await mastodonCommunication.CollectCommands(null);
                 var watchDog = scope.ServiceProvider.GetRequiredService<WatchDog>();
 
-                Thread.Sleep(TimeSpan.FromMinutes(1));
-                if (lastCheck > DateTime.Now.AddMinutes(-15)) continue;
+                if (startUp)
+                {
+                    watchDog.OutPutData();
+                    startUp = false;
+                }
+                else
+                {
+                    Thread.Sleep(TimeSpan.FromMinutes(1));
+                    if (lastCheck > DateTime.Now.AddMinutes(-15)) continue;
+                }
 
                 lastCheck = DateTime.Now;
                 await watchDog.Run();
