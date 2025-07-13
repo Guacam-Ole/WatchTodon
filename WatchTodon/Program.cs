@@ -12,33 +12,22 @@ class Program
         var provider = Inject();
 
         Console.WriteLine("WatchTodon up and running");
-        DateTime lastCheck = DateTime.Now;
-        bool startUp = true;
-        
+        var lastCheck = DateTime.Now;
+
         while (true)
         {
             try
             {
-                using (var scope = provider.CreateScope())
-                {
-                    var mastodonCommunication = scope.ServiceProvider.GetRequiredService<MastodonCommunication>();
-                    await mastodonCommunication.CollectCommands(null);
-                    var watchDog = scope.ServiceProvider.GetRequiredService<WatchDog>();
+                using var scope = provider.CreateScope();
+                var mastodonCommunication = scope.ServiceProvider.GetRequiredService<MastodonCommunication>();
+                await mastodonCommunication.CollectCommands(null);
+                var watchDog = scope.ServiceProvider.GetRequiredService<WatchDog>();
 
-                    if (startUp)
-                    {
-                        await watchDog.OutPutData();
-                        startUp = false;
-                    }
-                    else
-                    {
-                        Thread.Sleep(TimeSpan.FromMinutes(1));
-                        if (lastCheck > DateTime.Now.AddMinutes(-15)) continue;
-                    }
+                Thread.Sleep(TimeSpan.FromMinutes(1));
+                if (lastCheck > DateTime.Now.AddMinutes(-15)) continue;
 
-                    lastCheck = DateTime.Now;
-                    await watchDog.Run();
-                }
+                lastCheck = DateTime.Now;
+                await watchDog.Run();
             }
             catch (Exception e)
             {

@@ -16,16 +16,11 @@ public class WatchDog
 
     public async Task Run()
     {
-        Console.WriteLine("Watchdog START");
         var client = Login();
         
-        // Just once an hour
         await CheckFailedEntries(client);
         await CheckWorkingEntries(client);
-
         await CheckNewEntries(client);
-
-        Console.WriteLine("Watchdog FINISH");
     }
 
     private MastodonClient Login()
@@ -34,11 +29,11 @@ public class WatchDog
                throw new Exception("Failed to connect to Mastodon");
     }
 
-    public async Task OutPutData()
+    private void OutPutData()
     {
-        Console.WriteLine("Databease-Contents:\n");
+        Console.WriteLine("New Database Contents:\n");
         var all=_dataBase.GetAllEntries();
-        Console.WriteLine("   DidFail? \tLastChecked \tLastPost \tname\n");
+        Console.WriteLine("   DidFail? \tLastChecked \t\tLastPost \t\tname\n");
         foreach (var entry in all)
         {
             Console.WriteLine($"   {entry.DidFail} \t{entry.LastChecked} \t{entry.LastStatus} \t '{entry.AccountToWatchName}'\n");
@@ -68,14 +63,16 @@ public class WatchDog
                     Language.Convert(language.GetCaptions().WatchDogFirstTime, entry.AccountToWatchName[1..],
                         entry.LastStatusStr));
             }
+            OutPutData();
         }
     }
 
     private async Task CheckWorkingEntries(MastodonClient client)
     {
-        Console.WriteLine("Checking woring entries");
+        
         var entries = _dataBase.GetAllEntriesOlderThan(TimeSpan.FromHours(1)).Where(q => !q.DidFail).ToList();
         if (!entries.Any()) return;
+        var stateChanged = false;
         Console.WriteLine($"Checking {entries.Count} for changes in the last hour ");
         foreach (var entry in entries)
         {
@@ -88,6 +85,7 @@ public class WatchDog
                 entry.DidFail = entry.LastStatus < DateTime.Now.Add(-entry.Interval);
                 if (entry.DidFail)
                 {
+                    stateChanged = true;
                     Console.WriteLine($"'{entry.AccountToWatchName[1..]}' is dead (last update:{entry.LastStatus})");
                     var language = new Language(entry.Language);
                     await SendPrivateMessageTo(client, entry.RequestedByName,
@@ -98,14 +96,15 @@ public class WatchDog
 
             _dataBase.UpsertEntry(entry);
         }
+        if (stateChanged) OutPutData();
     }
 
     private async Task CheckFailedEntries(MastodonClient client)
     {
-        Console.WriteLine("Checking failed entries");
         var entries = _dataBase.GetAllFailedEntries();
         if (entries.Any())
         {
+            var stateChanged = false;
             Console.WriteLine($"re-Checking {entries.Count} failed Entries ");
             foreach (var entry in entries)
             {
@@ -118,6 +117,7 @@ public class WatchDog
                     if ((entry.LastStatus > DateTime.Now.Add(-entry.Interval)))
                     {
                         Console.WriteLine($"'{entry.AccountToWatchName}' is alive again");
+                        stateChanged = true;
                         entry.DidFail = false;
                         var language = new Language(entry.Language);
                         await SendPrivateMessageTo(client, entry.RequestedByName,
@@ -128,6 +128,7 @@ public class WatchDog
 
                 _dataBase.UpsertEntry(entry);
             }
+            if (stateChanged) OutPutData();
         }
     }
 
