@@ -1,3 +1,4 @@
+using System.Diagnostics.Contracts;
 using Mastonet;
 
 namespace WatchTodon;
@@ -13,16 +14,14 @@ public class WatchDog
         _secrets = secrets;
     }
 
-    public async Task Run(int step)
+    public async Task Run()
     {
         Console.WriteLine("Watchdog START");
         var client = Login();
-        if (step % 4 == 0)
-        {
-            // Just once an hour
-            await CheckFailedEntries(client);
-            await CheckWorkingEntries(client);
-        }
+        
+        // Just once an hour
+        await CheckFailedEntries(client);
+        await CheckWorkingEntries(client);
 
         await CheckNewEntries(client);
 
@@ -33,6 +32,17 @@ public class WatchDog
     {
         return new MastodonClient(_secrets.Instance, _secrets.AccessToken) ??
                throw new Exception("Failed to connect to Mastodon");
+    }
+
+    public async Task OutPutData()
+    {
+        Console.WriteLine("Databease-Contents:\n");
+        var all=_dataBase.GetAllEntries();
+        Console.WriteLine("   DidFail? \tLastChecked \tLastPost \tname\n");
+        foreach (var entry in all)
+        {
+            Console.WriteLine($"   {entry.DidFail} \t{entry.LastChecked} \t{entry.LastStatus} \t '{entry.AccountToWatchName}'\n");
+        }
     }
 
     private async Task CheckNewEntries(MastodonClient client)
@@ -63,6 +73,7 @@ public class WatchDog
 
     private async Task CheckWorkingEntries(MastodonClient client)
     {
+        Console.WriteLine("Checking woring entries");
         var entries = _dataBase.GetAllEntriesOlderThan(TimeSpan.FromHours(1)).Where(q => !q.DidFail).ToList();
         if (!entries.Any()) return;
         Console.WriteLine($"Checking {entries.Count} for changes in the last hour ");
@@ -91,6 +102,7 @@ public class WatchDog
 
     private async Task CheckFailedEntries(MastodonClient client)
     {
+        Console.WriteLine("Checking failed entries");
         var entries = _dataBase.GetAllFailedEntries();
         if (entries.Any())
         {

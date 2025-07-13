@@ -49,4 +49,9 @@ public class DataBase
     {
         return _database.GetCollection<WatchDogEntry>().Find(q => q.LastChecked < DateTime.Now.AddHours(-interval.TotalHours)).ToList();
     }
+
+    public List<WatchDogEntry> GetAllEntries()
+    {
+        return _database.GetCollection<WatchDogEntry>().FindAll().ToList();
+    }
 }
