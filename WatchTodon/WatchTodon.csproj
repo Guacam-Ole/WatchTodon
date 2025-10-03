@@ -16,6 +16,14 @@
     </ItemGroup>
 
     <ItemGroup>
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog.Extensions.Hosting" Version="9.0.0" />
+        <PackageReference Include="Serilog.Formatting.Compact" Version="3.0.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+        <PackageReference Include="Serilog.Sinks.Grafana.Loki" Version="8.3.1" />
+    </ItemGroup>
+    
+    <ItemGroup>
       <None Remove="secrets.json" />
       <Content Include="secrets.json">
         <CopyToOutputDirectory>Always</CopyToOutputDirectory>

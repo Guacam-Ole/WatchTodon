@@ -1,8 +1,5 @@
-using System.ComponentModel.DataAnnotations;
-using System.Net.Http.Headers;
-using System.Net.NetworkInformation;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Logging;
 
 namespace WatchTodon;
 
@@ -13,14 +10,17 @@ public class MastodonCommunication
 {
     private readonly Secrets _secrets;
     private readonly DataBase _dataBase;
+    private readonly ILogger<MastodonCommunication> _logger;
     private readonly MastodonClient _client;
     private Language _language;
 
 
-    public MastodonCommunication(Secrets secrets, DataBase dataBase)
+    public MastodonCommunication(Secrets secrets, DataBase dataBase, ILogger<MastodonCommunication> logger)
     {
         _secrets = secrets;
         _dataBase = dataBase;
+        _logger = logger;
+        _language = new Language("en");
         _client = Login();
     }
 
@@ -35,7 +35,7 @@ public class MastodonCommunication
     {
         var notifications = await _client.GetNotifications(new ArrayOptions() { Limit = 200, SinceId = sinceId });
         var mentions = notifications.Where(q => q.Type == "mention").ToList();
-        if (!mentions.Any()) return;
+        if (mentions.Count == 0) return;
         foreach (var notification in mentions)
         {
             await InterpretNotification(notification);
@@ -69,7 +69,6 @@ public class MastodonCommunication
                 case "CLEAR":
                     await ParseClear(notification);
                     break;
-                    ;
                 default:
                     await ReplyWithHelp(notification.Status);
                     break;
@@ -77,7 +76,7 @@ public class MastodonCommunication
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
+            _logger.LogError(e, "Failed analyzing notification with id '{Id}'", notification.Id);
         }
         finally
         {
@@ -125,7 +124,8 @@ public class MastodonCommunication
         var newCount = _dataBase.GetAllEntriesFor(notification.Status.Account.Id).Count;
         await ReplyWithMessage(notification.Status,
             Language.Convert(_language.GetCaptions().InfoAccountAdded, account, hours, newCount));
-        Console.WriteLine($"added or updated Account {account} with {hours}. (now {newCount} for {notification.Status.Account.AccountName}");
+        
+        _logger.LogInformation("Added or updated Account '{Account}' with '{Hours}'. (now '{Count}' for '{AccountName}')",account, hours, newCount, notification.Status.Account.AccountName);
     }
 
     private async Task<string?> GetAccountIdByName(string account)
@@ -138,7 +138,7 @@ public class MastodonCommunication
 
     private async Task ParseClear(Notification notification)
     {
-        RemoveAll(notification.Status.Account.Id);
+        RemoveAll(notification.Status?.Account.Id);
         await ReplyWithMessage(notification.Status, "Done");
     }
     
@@ -170,7 +170,7 @@ public class MastodonCommunication
             await ReplyWithMessage(notification.Status,
                 Language.Convert(_language.GetCaptions().InfoAccountRemoved, account));
         }
-        Console.WriteLine($"removed Account {account} for {notification.Status.Account.AccountName}");
+        _logger.LogInformation("removed Account '{Account}' for '{AccountName}'", account, notification.Status.Account.AccountName);
     }
 
     private async Task ParseInfo(Notification notification)
@@ -198,15 +198,15 @@ public class MastodonCommunication
         return true;
     }
 
-    private bool RemoveAll(string senderId)
+    private void RemoveAll(string? senderId)
     {
+        if (senderId == null) return ;
         var allEntries = _dataBase.GetAllEntriesFor(senderId);
         foreach (var entry in allEntries)
         {
             _dataBase.RemoveEntry(entry.Id);
         }
 
-        return true;
     }
 
     private void AddUpdateAccount(string senderId, string senderName, string watchAccountId, string watchAccountName, int interval)

@@ -1,5 +1,6 @@
-using System.Diagnostics.Contracts;
+using System.Globalization;
 using Mastonet;
+using Microsoft.Extensions.Logging;
 
 namespace WatchTodon;
 
@@ -7,17 +8,19 @@ public class WatchDog
 {
     private readonly DataBase _dataBase;
     private readonly Secrets _secrets;
+    private readonly ILogger<WatchDog> _logger;
 
-    public WatchDog(DataBase dataBase, Secrets secrets)
+    public WatchDog(DataBase dataBase, Secrets secrets, ILogger<WatchDog> logger)
     {
         _dataBase = dataBase;
         _secrets = secrets;
+        _logger = logger;
     }
 
     public async Task Run()
     {
         var client = Login();
-        
+
         await CheckFailedEntries(client);
         await CheckWorkingEntries(client);
         await CheckNewEntries(client);
@@ -31,27 +34,29 @@ public class WatchDog
 
     private string D2S(DateTime? dateTime)
     {
-        if (dateTime == null) return "never";
-        return dateTime.Value.ToString();
+        return dateTime == null ? "never" : dateTime.Value.ToString(CultureInfo.InvariantCulture);
     }
-    
+
     public void OutPutData()
     {
-        Console.WriteLine("New Database Contents:\n");
-        var all=_dataBase.GetAllEntries();
-        Console.WriteLine("    \tInterval \tLastChecked \t\tLastPost \t\tCreated \t\tname \n");
+        _logger.LogDebug("New Database Contents:");
+        var all = _dataBase.GetAllEntries();
+        _logger.LogDebug("    Interval    LastChecked LastPost    Created     name ");
         foreach (var entry in all)
         {
-            Console.WriteLine($"   {(entry.DidFail?"🛑":"🥑️")} \t{entry.Interval.TotalHours} \t\t{D2S(entry.LastChecked)} \t{D2S(entry.LastStatus)} \t{entry.Created}\t'{entry.AccountToWatchName}'\n");
+            _logger.LogDebug(
+                "   {FailIcon} {TotalHours} {LastChecked} {LastStatus} {Created} '{AccountToWatchName}'",
+                entry.DidFail ? "🛑" : "🥑️", entry.Interval.TotalHours, D2S(entry.LastChecked), D2S(entry.LastStatus),
+                entry.Created, entry.AccountToWatchName);
         }
     }
 
     private async Task CheckNewEntries(MastodonClient client)
     {
         var entries = _dataBase.GetAllUncheckedEntries();
-        if (entries.Any())
+        if (entries.Count != 0)
         {
-            Console.WriteLine($"Checking {entries.Count} new Entries ");
+            _logger.LogDebug("Checking '{Count}' new Entries ", entries.Count);
             foreach (var entry in entries)
             {
                 entry.LastChecked = DateTime.Now;
@@ -64,22 +69,22 @@ public class WatchDog
 
                 _dataBase.UpsertEntry(entry);
                 var language = new Language(entry.Language);
-                Console.WriteLine($"Checked '{entry.AccountToWatchName}' for the first time");
+                _logger.LogDebug("Checked '{AccountToWatchName}' for the first time", entry.AccountToWatchName);
                 await SendPrivateMessageTo(client, entry.RequestedByName,
                     Language.Convert(language.GetCaptions().WatchDogFirstTime, entry.AccountToWatchName[1..],
                         entry.LastStatusStr));
             }
+
             OutPutData();
         }
     }
 
     private async Task CheckWorkingEntries(MastodonClient client)
     {
-        
         var entries = _dataBase.GetAllEntriesOlderThan(TimeSpan.FromHours(1)).Where(q => !q.DidFail).ToList();
-        if (!entries.Any()) return;
+        if (entries.Count == 0) return;
         var stateChanged = false;
-        Console.WriteLine($"Checking {entries.Count} for changes in the last hour ");
+        _logger.LogDebug("Checking {Count} for changes in the last hour ", entries.Count);
         foreach (var entry in entries)
         {
             entry.LastChecked = DateTime.Now;
@@ -92,7 +97,7 @@ public class WatchDog
                 if (entry.DidFail)
                 {
                     stateChanged = true;
-                    Console.WriteLine($"'{entry.AccountToWatchName[1..]}' is dead (last update:{entry.LastStatus})");
+                    _logger.LogDebug("'{AccountToWatchName}' is dead (last update:{LastStatus})", entry.AccountToWatchName[1..], entry.LastStatus);
                     var language = new Language(entry.Language);
                     await SendPrivateMessageTo(client, entry.RequestedByName,
                         Language.Convert(language.GetCaptions().WatchDogBadNews, entry.AccountToWatchName[1..],
@@ -102,16 +107,17 @@ public class WatchDog
 
             _dataBase.UpsertEntry(entry);
         }
+
         if (stateChanged) OutPutData();
     }
 
     private async Task CheckFailedEntries(MastodonClient client)
     {
         var entries = _dataBase.GetAllFailedEntries();
-        if (entries.Any())
+        if (entries.Count != 0)
         {
             var stateChanged = false;
-            Console.WriteLine($"re-Checking {entries.Count} failed Entries ");
+            _logger.LogInformation("re-Checking {Count} failed Entries ", entries.Count);
             foreach (var entry in entries)
             {
                 entry.LastChecked = DateTime.Now;
@@ -122,7 +128,7 @@ public class WatchDog
                     entry.LastStatus = newestStatuses.First().CreatedAt.ToLocalTime();
                     if ((entry.LastStatus > DateTime.Now.Add(-entry.Interval)))
                     {
-                        Console.WriteLine($"'{entry.AccountToWatchName}' is alive again");
+                        _logger.LogInformation("'{Name}' is alive again", entry.AccountToWatchName);
                         stateChanged = true;
                         entry.DidFail = false;
                         var language = new Language(entry.Language);
@@ -134,11 +140,12 @@ public class WatchDog
 
                 _dataBase.UpsertEntry(entry);
             }
+
             if (stateChanged) OutPutData();
         }
     }
 
-    private static async Task SendPrivateMessageTo(MastodonClient client, string recipient, string message)
+    private async Task SendPrivateMessageTo(MastodonClient client, string recipient, string message)
     {
         try
         {
@@ -146,9 +153,7 @@ public class WatchDog
         }
         catch (Exception e)
         {
-            Console.WriteLine(e);
-            // Make sure to create no messageloop
-            return;
+            _logger.LogError(e, "Failed sending message to '{Recipient}'", recipient);
         }
     }
 }
