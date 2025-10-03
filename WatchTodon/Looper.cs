@@ -26,6 +26,7 @@ public class Looper
             if (_startUp)
             {
                 _watchDog.OutPutData();
+                _startUp = false;
             }
             else
             {
